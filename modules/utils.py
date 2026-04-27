@@ -9,12 +9,15 @@ import os
 
 def format_currency(amount):
     """Return amount formatted as a USD currency string, e.g. '$1,234.56'."""
-    pass  # TODO: implement in Sprint 6
+    return f"${amount:,.2f}"
 
 
 def validate_amount(input_str):
     """Validate that input_str is a positive number. Raises ValueError if not."""
-    pass  # TODO: implement in Sprint 6
+    value = float(input_str)
+    if value <= 0:
+        raise ValueError("Amount must be greater than zero.")
+    return value
 
 
 def clear_screen():

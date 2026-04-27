@@ -11,5 +11,23 @@
       "password_hash": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
     }
   },
-  "accounts": {}
+  "accounts": {
+    "8E8F162B": {
+      "account_id": "8E8F162B",
+      "owner": "andres",
+      "account_type": "Checking",
+      "balance": 0.0,
+      "transactions": [],
+      "overdraft_limit": 500.0
+    },
+    "8EE2C179": {
+      "account_id": "8EE2C179",
+      "owner": "andres",
+      "account_type": "Savings",
+      "balance": 0.0,
+      "transactions": [],
+      "monthly_withdrawal_limit": 6,
+      "withdrawals_this_month": 0
+    }
+  }
 }
