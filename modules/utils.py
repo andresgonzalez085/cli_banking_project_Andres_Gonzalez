@@ -8,7 +8,7 @@ import os
 
 
 def format_currency(amount):
-    """Return amount formatted as a USD currency string, e.g. $1,234.56"""
+    """Return amount formatted as a USD currency string, e.g. '$1,234.56'."""
     pass  # TODO: implement in Sprint 6
 
 
@@ -19,7 +19,7 @@ def validate_amount(input_str):
 
 def clear_screen():
     """Clear the terminal screen (cross-platform)."""
-    pass  # TODO: implement in Sprint 6
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 
 def print_table(headers, rows):
@@ -29,4 +29,4 @@ def print_table(headers, rows):
 
 def generate_id():
     """Return a short unique alphanumeric ID using uuid."""
-    pass  # TODO: implement in Sprint 6
+    return uuid.uuid4().hex[:8].upper()
