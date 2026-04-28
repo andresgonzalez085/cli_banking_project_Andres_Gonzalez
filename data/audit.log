@@ -1,0 +1,4 @@
+[2026-04-27T20:48:45] user=andres type=DEPOSIT account=8E8F162B amount=500.00 balance=500.00
+[2026-04-27T20:49:08] user=andres type=WITHDRAWAL account=8E8F162B amount=200.00 balance=300.00
+[2026-04-27T20:49:31] user=andres type=TRANSFER from=8E8F162B to=8EE2C179 amount=100.00 from_bal=200.00 to_bal=100.00
+[2026-04-27T20:50:24] user=andres type=INTEREST account=8EE2C179 rate=0.0500 periods=3 earned=15.76 balance=115.76

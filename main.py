@@ -7,8 +7,9 @@ import json
 import os
 
 import modules.auth as auth
+import modules.transactions as txn
 from modules.accounts import CheckingAccount, SavingsAccount
-from modules.utils import clear_screen, format_currency, generate_id
+from modules.utils import clear_screen, format_currency, generate_id, validate_amount
 
 _DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                           'data', 'accounts.json')
@@ -90,6 +91,19 @@ def _show_banking_menu(user):
     print("  |  3. Search & Sort Transactions    |")
     print("  |  4. View Reports                  |")
     print("  |  5. Logout                        |")
+    print("  +-----------------------------------+")
+
+
+def _show_transactions_menu(user):
+    print(f"\n  Logged in as: {user.username}")
+    print("  +-----------------------------------+")
+    print("  |      TRANSACTIONS  MENU           |")
+    print("  +-----------------------------------+")
+    print("  |  1. Deposit                       |")
+    print("  |  2. Withdraw                      |")
+    print("  |  3. Transfer                      |")
+    print("  |  4. Apply Interest                |")
+    print("  |  5. Back to Banking Menu          |")
     print("  +-----------------------------------+")
 
 
@@ -325,13 +339,187 @@ def _handle_manage_accounts(user):
 
 
 # ---------------------------------------------------------------------------
-# Placeholder handlers (wired in later sprints)
+# Transaction helpers
 # ---------------------------------------------------------------------------
 
-def _handle_transactions():
-    """Sprint 3: deposit, withdraw, transfer."""
-    print("\n  [Transactions — available in Sprint 3]")
-    input("  Press Enter to continue...")
+def _select_account(user_accs, prompt):
+    """List user_accs and return the chosen Account, or None to cancel."""
+    if not user_accs:
+        print("  You have no accounts yet.")
+        input("  Press Enter to continue...")
+        return None
+
+    for i, acc in enumerate(user_accs, 1):
+        print(f"  [{i}] {acc.account_type} Account [{acc.account_id}]"
+              f"  Balance: {format_currency(acc.balance)}")
+
+    raw = input(f"\n  {prompt} (0 to cancel): ").strip()
+    try:
+        idx = int(raw)
+    except ValueError:
+        print("  Invalid input.")
+        input("  Press Enter to continue...")
+        return None
+
+    if idx == 0:
+        return None
+    if not (1 <= idx <= len(user_accs)):
+        print("  Invalid selection.")
+        input("  Press Enter to continue...")
+        return None
+
+    return user_accs[idx - 1]
+
+
+def _do_deposit(user):
+    """Prompt for account and amount, then execute a deposit."""
+    print("\n  --- Deposit ---")
+    user_accs = [a for a in _accounts.values() if a.owner == user.username]
+    account = _select_account(user_accs, "Select account number")
+    if account is None:
+        return
+
+    raw = input("  Amount to deposit: $").strip()
+    try:
+        amount = validate_amount(raw)
+    except ValueError as e:
+        print(f"  Error: {e}")
+        input("  Press Enter to continue...")
+        return
+
+    try:
+        txn.deposit(account, amount)
+        _save_user_accounts(user.username)
+    except ValueError as e:
+        print(f"  Error: {e}")
+
+    input("\n  Press Enter to continue...")
+
+
+def _do_withdraw(user):
+    """Prompt for account and amount, then execute a withdrawal."""
+    print("\n  --- Withdraw ---")
+    user_accs = [a for a in _accounts.values() if a.owner == user.username]
+    account = _select_account(user_accs, "Select account number")
+    if account is None:
+        return
+
+    raw = input("  Amount to withdraw: $").strip()
+    try:
+        amount = validate_amount(raw)
+    except ValueError as e:
+        print(f"  Error: {e}")
+        input("  Press Enter to continue...")
+        return
+
+    try:
+        txn.withdraw(account, amount)
+        _save_user_accounts(user.username)
+    except ValueError as e:
+        print(f"  Error: {e}")
+
+    input("\n  Press Enter to continue...")
+
+
+def _do_transfer(user):
+    """Prompt for source, destination, and amount, then execute a transfer."""
+    print("\n  --- Transfer ---")
+    user_accs = [a for a in _accounts.values() if a.owner == user.username]
+
+    if len(user_accs) < 2:
+        print("  You need at least 2 accounts to transfer between them.")
+        input("  Press Enter to continue...")
+        return
+
+    print("  Select SOURCE account:")
+    from_acc = _select_account(user_accs, "Select source account number")
+    if from_acc is None:
+        return
+
+    remaining = [a for a in user_accs if a.account_id != from_acc.account_id]
+    print("  Select DESTINATION account:")
+    to_acc = _select_account(remaining, "Select destination account number")
+    if to_acc is None:
+        return
+
+    raw = input("  Amount to transfer: $").strip()
+    try:
+        amount = validate_amount(raw)
+    except ValueError as e:
+        print(f"  Error: {e}")
+        input("  Press Enter to continue...")
+        return
+
+    try:
+        txn.transfer(from_acc, to_acc, amount)
+        _save_user_accounts(user.username)
+    except ValueError as e:
+        print(f"  Error: {e}")
+
+    input("\n  Press Enter to continue...")
+
+
+def _do_interest(user):
+    """Prompt for account, rate, and periods, then apply compound interest."""
+    print("\n  --- Apply Interest ---")
+    user_accs = [a for a in _accounts.values() if a.owner == user.username]
+    account = _select_account(user_accs, "Select account number")
+    if account is None:
+        return
+
+    raw_rate = input("  Annual/periodic interest rate (e.g. 0.05 for 5%): ").strip()
+    try:
+        rate = float(raw_rate)
+        if rate <= 0:
+            raise ValueError("Rate must be positive.")
+    except ValueError as e:
+        print(f"  Error: {e}")
+        input("  Press Enter to continue...")
+        return
+
+    raw_periods = input("  Number of compounding periods (1-120): ").strip()
+    try:
+        periods = int(raw_periods)
+        if not (1 <= periods <= 120):
+            raise ValueError("Periods must be between 1 and 120.")
+    except ValueError as e:
+        print(f"  Error: {e}")
+        input("  Press Enter to continue...")
+        return
+
+    try:
+        txn.apply_account_interest(account, rate, periods)
+        _save_user_accounts(user.username)
+    except ValueError as e:
+        print(f"  Error: {e}")
+
+    input("\n  Press Enter to continue...")
+
+
+# ---------------------------------------------------------------------------
+# Transactions submenu loop
+# ---------------------------------------------------------------------------
+
+def _handle_transactions(user):
+    """Open the Transactions submenu for the logged-in user."""
+    while True:
+        _show_banner()
+        _show_transactions_menu(user)
+        choice = input("\n  Select an option (1-5): ").strip()
+
+        if choice == '1':
+            _do_deposit(user)
+        elif choice == '2':
+            _do_withdraw(user)
+        elif choice == '3':
+            _do_transfer(user)
+        elif choice == '4':
+            _do_interest(user)
+        elif choice == '5':
+            break
+        else:
+            print("  Invalid option. Please enter 1 through 5.")
+            input("  Press Enter to continue...")
 
 
 def _handle_search_sort():
@@ -385,7 +573,7 @@ def _banking_menu_loop(user):
         if choice == '1':
             _handle_manage_accounts(user)
         elif choice == '2':
-            _handle_transactions()
+            _handle_transactions(user)
         elif choice == '3':
             _handle_search_sort()
         elif choice == '4':

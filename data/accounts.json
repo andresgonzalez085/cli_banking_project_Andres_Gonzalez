@@ -16,16 +16,53 @@
       "account_id": "8E8F162B",
       "owner": "andres",
       "account_type": "Checking",
-      "balance": 0.0,
-      "transactions": [],
+      "balance": 200.0,
+      "transactions": [
+        {
+          "txn_id": "CF3D39AB",
+          "type": "DEPOSIT",
+          "amount": 500.0,
+          "timestamp": "2026-04-27T20:48:45",
+          "balance_after": 500.0
+        },
+        {
+          "txn_id": "BEDC8F9B",
+          "type": "WITHDRAWAL",
+          "amount": 200.0,
+          "timestamp": "2026-04-27T20:49:08",
+          "balance_after": 300.0
+        },
+        {
+          "txn_id": "C1C0E295",
+          "type": "TRANSFER",
+          "amount": 100.0,
+          "timestamp": "2026-04-27T20:49:31",
+          "balance_after": 200.0
+        }
+      ],
       "overdraft_limit": 500.0
     },
     "8EE2C179": {
       "account_id": "8EE2C179",
       "owner": "andres",
       "account_type": "Savings",
-      "balance": 0.0,
-      "transactions": [],
+      "balance": 115.7625,
+      "transactions": [
+        {
+          "txn_id": "13A3A226",
+          "type": "TRANSFER",
+          "amount": 100.0,
+          "timestamp": "2026-04-27T20:49:31",
+          "balance_after": 100.0
+        },
+        {
+          "txn_id": "DCAD0C6A",
+          "type": "INTEREST",
+          "amount": 15.762500000000003,
+          "timestamp": "2026-04-27T20:50:24",
+          "balance_after": 115.7625
+        }
+      ],
       "monthly_withdrawal_limit": 6,
       "withdrawals_this_month": 0
     }
