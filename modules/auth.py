@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 
+from modules.file_io import write_audit
 from modules.utils import generate_id
 
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -125,6 +126,7 @@ def register():
 
     print(f"\n  Account created! Welcome, {username}.")
     _current_user = User(user_id, username)
+    write_audit(username, "REGISTER", f"user_id={user_id}")
     return _current_user
 
 
@@ -146,6 +148,7 @@ def login():
         if user_record and user_record["password_hash"] == _hash_password(password):
             _current_user = User(user_record["user_id"], username)
             print(f"\n  Login successful. Welcome back, {username}!")
+            write_audit(username, "LOGIN", f"user_id={user_record['user_id']}")
             return _current_user
 
         remaining = 2 - attempt
@@ -153,6 +156,7 @@ def login():
             print(f"  Invalid username or password. {remaining} attempt(s) remaining.")
         else:
             print("  Too many failed attempts. Returning to main menu.")
+            write_audit(username or "unknown", "LOGIN_FAILED", "max_attempts_reached")
 
     return None
 
@@ -161,5 +165,6 @@ def logout():
     """Clear the current session and return to the main menu."""
     global _current_user
     if _current_user:
+        write_audit(_current_user.username, "LOGOUT", f"user_id={_current_user.user_id}")
         print(f"\n  Goodbye, {_current_user.username}! You have been logged out.")
     _current_user = None

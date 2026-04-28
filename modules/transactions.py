@@ -3,13 +3,10 @@ transactions.py — Deposit, withdraw, transfer, and recursive interest.
 Implemented in Sprint 3.
 """
 
-import os
 from datetime import datetime
 
+from modules.file_io import append_transaction_csv, write_audit
 from modules.utils import format_currency, generate_id
-
-_BASE_DIR  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_AUDIT_FILE = os.path.join(_BASE_DIR, 'data', 'audit.log')
 
 MAX_INTEREST_PERIODS = 120
 
@@ -39,28 +36,6 @@ def record_transaction(txn_type, amount, balance_after):
         "timestamp": datetime.now().isoformat(timespec='seconds'),
         "balance_after": balance_after,
     }
-
-
-# ---------------------------------------------------------------------------
-# Audit log
-# ---------------------------------------------------------------------------
-
-def _write_audit(username, txn_type, details):
-    """Append one timestamped line to data/audit.log.
-
-    Args:
-        username (str): Logged-in user performing the action.
-        txn_type (str): Transaction type label.
-        details (str): Extra context (account IDs, amounts, etc.).
-    """
-    os.makedirs(os.path.dirname(_AUDIT_FILE), exist_ok=True)
-    timestamp = datetime.now().isoformat(timespec='seconds')
-    line = f"[{timestamp}] user={username} type={txn_type} {details}\n"
-    try:
-        with open(_AUDIT_FILE, 'a') as f:
-            f.write(line)
-    except PermissionError as e:
-        print(f"  [Warning] Could not write audit log: {e}")
 
 
 # ---------------------------------------------------------------------------
@@ -156,11 +131,12 @@ def deposit(account, amount):
     account.deposit(amount)
     txn = account.transactions[-1]
 
-    _write_audit(
+    write_audit(
         account.owner, "DEPOSIT",
         f"account={account.account_id} amount={amount:.2f} "
         f"balance={account.balance:.2f}"
     )
+    append_transaction_csv(account.owner, account.account_id, txn)
     _print_receipt("DEPOSIT", account, amount)
     return txn
 
@@ -184,11 +160,12 @@ def withdraw(account, amount):
     account.withdraw(amount)
     txn = account.transactions[-1]
 
-    _write_audit(
+    write_audit(
         account.owner, "WITHDRAWAL",
         f"account={account.account_id} amount={amount:.2f} "
         f"balance={account.balance:.2f}"
     )
+    append_transaction_csv(account.owner, account.account_id, txn)
     _print_receipt("WITHDRAWAL", account, amount)
     return txn
 
@@ -228,12 +205,14 @@ def transfer(from_acc, to_acc, amount):
     from_txn = from_acc.transactions[-1]
     to_txn   = to_acc.transactions[-1]
 
-    _write_audit(
+    write_audit(
         from_acc.owner, "TRANSFER",
         f"from={from_acc.account_id} to={to_acc.account_id} "
         f"amount={amount:.2f} from_bal={from_acc.balance:.2f} "
         f"to_bal={to_acc.balance:.2f}"
     )
+    append_transaction_csv(from_acc.owner, from_acc.account_id, from_txn)
+    append_transaction_csv(to_acc.owner, to_acc.account_id, to_txn)
     _print_transfer_receipt(from_acc, to_acc, amount)
     return from_txn, to_txn
 
@@ -300,11 +279,12 @@ def apply_account_interest(account, rate, periods):
     account.transactions[-1]["type"] = "INTEREST"
     txn = account.transactions[-1]
 
-    _write_audit(
+    write_audit(
         account.owner, "INTEREST",
         f"account={account.account_id} rate={rate:.4f} periods={periods} "
         f"earned={interest_earned:.2f} balance={account.balance:.2f}"
     )
+    append_transaction_csv(account.owner, account.account_id, txn)
     _print_receipt(
         "INTEREST", account, interest_earned,
         note=f"{rate*100:.2f}% x {periods}p"

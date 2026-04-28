@@ -3,16 +3,11 @@ main.py — Application entry point for the CLI Banking Application.
 Run with: python main.py
 """
 
-import json
-import os
-
 import modules.auth as auth
+import modules.file_io as file_io
 import modules.transactions as txn
 from modules.accounts import CheckingAccount, SavingsAccount
 from modules.utils import clear_screen, format_currency, generate_id, validate_amount
-
-_DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                          'data', 'accounts.json')
 
 # Session-level account registry: account_id -> Account instance.
 # Populated on login, cleared on logout.
@@ -121,81 +116,18 @@ def _show_accounts_menu(user):
 
 
 # ---------------------------------------------------------------------------
-# Account persistence helpers
-# Sprint 4 (file_io.py) will replace these with save_accounts() /
-# load_accounts() — the call sites in this file will be the only change.
+# Account persistence helpers — delegate to file_io (Sprint 4)
 # ---------------------------------------------------------------------------
-
-def _account_to_dict(acc):
-    """Serialize an Account subclass to a JSON-compatible dict."""
-    d = {
-        "account_id": acc.account_id,
-        "owner": acc.owner,
-        "account_type": acc.account_type,
-        "balance": acc.balance,
-        "transactions": acc.transactions,
-    }
-    if isinstance(acc, CheckingAccount):
-        d["overdraft_limit"] = acc.overdraft_limit
-    elif isinstance(acc, SavingsAccount):
-        d["monthly_withdrawal_limit"] = acc.monthly_withdrawal_limit
-        d["withdrawals_this_month"] = acc._withdrawals_this_month
-    return d
-
-
-def _dict_to_account(d):
-    """Reconstruct an Account subclass from a JSON dict."""
-    if d.get("account_type") == "Checking":
-        acc = CheckingAccount(
-            d["account_id"], d["owner"],
-            initial_balance=d["balance"],
-            overdraft_limit=d.get("overdraft_limit", 500.0),
-        )
-    else:
-        acc = SavingsAccount(
-            d["account_id"], d["owner"],
-            initial_balance=d["balance"],
-            monthly_withdrawal_limit=d.get("monthly_withdrawal_limit", 6),
-        )
-        acc._withdrawals_this_month = d.get("withdrawals_this_month", 0)
-    acc.transactions = d.get("transactions", [])
-    return acc
-
 
 def _load_user_accounts(username):
     """Populate _accounts with every account owned by username."""
     global _accounts
-    _accounts = {}
-    try:
-        with open(_DATA_FILE, 'r') as f:
-            data = json.load(f)
-        for acc_dict in data.get("accounts", {}).values():
-            if acc_dict.get("owner") == username:
-                acc = _dict_to_account(acc_dict)
-                _accounts[acc.account_id] = acc
-    except (FileNotFoundError, json.JSONDecodeError):
-        pass
+    _accounts = file_io.load_accounts(username)
 
 
 def _save_user_accounts(username):
-    """Write _accounts back to accounts.json, preserving other users' data."""
-    try:
-        with open(_DATA_FILE, 'r') as f:
-            data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        data = {"users": {}, "accounts": {}}
-
-    # Remove all existing records for this user, then re-insert current state.
-    data["accounts"] = {
-        k: v for k, v in data["accounts"].items()
-        if v.get("owner") != username
-    }
-    for acc_id, acc in _accounts.items():
-        data["accounts"][acc_id] = _account_to_dict(acc)
-
-    os.makedirs(os.path.dirname(_DATA_FILE), exist_ok=True)
-    with open(_DATA_FILE, 'w') as f:
-        json.dump(data, f, indent=2)
+    """Write _accounts back to accounts.json via file_io."""
+    file_io.save_accounts(username, _accounts)
 
 
 # ---------------------------------------------------------------------------
@@ -579,6 +511,7 @@ def _banking_menu_loop(user):
         elif choice == '4':
             _handle_reports()
         elif choice == '5':
+            _save_user_accounts(user.username)
             _accounts.clear()
             auth.logout()
             break

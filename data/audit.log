@@ -2,3 +2,10 @@
 [2026-04-27T20:49:08] user=andres type=WITHDRAWAL account=8E8F162B amount=200.00 balance=300.00
 [2026-04-27T20:49:31] user=andres type=TRANSFER from=8E8F162B to=8EE2C179 amount=100.00 from_bal=200.00 to_bal=100.00
 [2026-04-27T20:50:24] user=andres type=INTEREST account=8EE2C179 rate=0.0500 periods=3 earned=15.76 balance=115.76
+[2026-04-27T21:00:46] user=_test_sprint4_ type=TEST_EVENT detail=sprint4_test
+[2026-04-27T21:02:42] user=andres type=LOGIN user_id=38FFF5FC
+[2026-04-27T21:02:57] user=andres type=DEPOSIT account=8E8F162B amount=2000.00 balance=2200.00
+[2026-04-27T21:03:21] user=andres type=TRANSFER from=8E8F162B to=8EE2C179 amount=250.00 from_bal=1950.00 to_bal=365.76
+[2026-04-27T21:03:35] user=andres type=LOGOUT user_id=38FFF5FC
+[2026-04-27T21:05:48] user=andres type=LOGIN user_id=38FFF5FC
+[2026-04-27T21:06:43] user=andres type=LOGOUT user_id=38FFF5FC
