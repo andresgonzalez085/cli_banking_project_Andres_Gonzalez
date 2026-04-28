@@ -14,31 +14,44 @@ _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _DATA_DIR = os.path.join(_BASE_DIR, 'data')
 _DATA_FILE = os.path.join(_DATA_DIR, 'accounts.json')
 
-_current_user = None  # session state: None when logged out
+# Module-level session state; None means no user is logged in.
+_current_user = None
 
 
 class User:
-    """Represents an authenticated user session."""
+    """An authenticated user session created after successful login or registration.
+
+    Attributes:
+        user_id (str): Read-only unique 8-character user identifier.
+        username (str): Read-only username chosen at registration.
+    """
 
     def __init__(self, user_id, username):
-        """Initialize a User with a unique ID and username."""
+        """Initialize a User.
+
+        Args:
+            user_id (str): Unique identifier assigned at registration.
+            username (str): The user's chosen login name.
+        """
         self._user_id = user_id
         self._username = username
 
     @property
     def user_id(self):
-        """Unique user identifier."""
+        """str: Read-only unique user identifier."""
         return self._user_id
 
     @property
     def username(self):
-        """Unique username chosen at registration."""
+        """str: Read-only username chosen at registration."""
         return self._username
 
     def __str__(self):
+        """Return the username as the informal string representation."""
         return self._username
 
     def __repr__(self):
+        """Return a developer-facing representation of the User."""
         return f"User(user_id='{self._user_id}', username='{self._username}')"
 
 
@@ -47,12 +60,26 @@ class User:
 # ---------------------------------------------------------------------------
 
 def _hash_password(password):
-    """Return the SHA-256 hex digest of password."""
+    """Compute the SHA-256 hex digest of a plaintext password.
+
+    Args:
+        password (str): Plaintext password string.
+
+    Returns:
+        str: 64-character lowercase hexadecimal SHA-256 digest.
+    """
     return hashlib.sha256(password.encode()).hexdigest()
 
 
 def _load_data():
-    """Load accounts.json; return the parsed dict, creating the file if absent."""
+    """Read accounts.json and return the parsed data dict.
+
+    Creates the file with an empty structure if it does not exist.
+    Returns a safe default on JSON decode or permission errors.
+
+    Returns:
+        dict: Parsed data with 'users' and 'accounts' top-level keys.
+    """
     os.makedirs(_DATA_DIR, exist_ok=True)
     if not os.path.exists(_DATA_FILE):
         empty = {"users": {}, "accounts": {}}
@@ -67,7 +94,11 @@ def _load_data():
 
 
 def _save_data(data):
-    """Write data dict to accounts.json."""
+    """Serialise data to accounts.json.
+
+    Args:
+        data (dict): Full data dict with 'users' and 'accounts' keys.
+    """
     os.makedirs(_DATA_DIR, exist_ok=True)
     try:
         with open(_DATA_FILE, 'w') as f:
@@ -81,14 +112,25 @@ def _save_data(data):
 # ---------------------------------------------------------------------------
 
 def get_current_user():
-    """Return the currently logged-in User, or None."""
+    """Return the currently logged-in User.
+
+    Returns:
+        User | None: The active User session, or None if no user is
+            logged in.
+    """
     return _current_user
 
 
 def register():
-    """Prompt for a new username and password, then create the account.
+    """Interactively register a new user account.
 
-    Returns the new User on success, or None if registration is cancelled.
+    Prompts for a unique username and a password (minimum 4 characters,
+    confirmed by a second entry). Saves credentials with a SHA-256 hashed
+    password and automatically logs the new user in.
+
+    Returns:
+        User | None: The newly created and logged-in User, or None if
+            the process is interrupted before completion.
     """
     global _current_user
     print("\n  --- Register New User ---")
@@ -131,9 +173,14 @@ def register():
 
 
 def login():
-    """Prompt for credentials and authenticate the user.
+    """Interactively authenticate an existing user.
 
-    Returns the User on success, or None on failure.
+    Allows up to 3 credential attempts before locking out and returning
+    None. A LOGIN_FAILED audit event is written after the third failure.
+
+    Returns:
+        User | None: The authenticated User on success, or None after
+            3 failed attempts.
     """
     global _current_user
     print("\n  --- Login ---")
@@ -162,7 +209,11 @@ def login():
 
 
 def logout():
-    """Clear the current session and return to the main menu."""
+    """Log out the current user and clear the session.
+
+    Writes a LOGOUT audit entry, prints a farewell message, then sets
+    the module-level ``_current_user`` to None unconditionally.
+    """
     global _current_user
     if _current_user:
         write_audit(_current_user.username, "LOGOUT", f"user_id={_current_user.user_id}")

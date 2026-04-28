@@ -14,10 +14,16 @@ _REPORTS_DIR = os.path.join(_BASE_DIR, 'reports')
 
 
 def _ensure_reports_dir():
+    """Create the reports/ output directory if it does not already exist."""
     os.makedirs(_REPORTS_DIR, exist_ok=True)
 
 
 def _today():
+    """Return today's date as an ISO-8601 string (YYYY-MM-DD).
+
+    Returns:
+        str: Current date formatted as 'YYYY-MM-DD', e.g. '2026-04-27'.
+    """
     return date.today().strftime('%Y-%m-%d')
 
 

@@ -27,23 +27,24 @@ _CSV_HEADERS = [
 # ---------------------------------------------------------------------------
 
 def _ensure_data_dir():
+    """Create the data/ directory if it does not already exist."""
     os.makedirs(_DATA_DIR, exist_ok=True)
 
 
 def _account_to_dict(acc):
     """Serialize an Account subclass to a JSON-compatible dict."""
     d = {
-        "account_id":   acc.account_id,
-        "owner":        acc.owner,
+        "account_id": acc.account_id,
+        "owner": acc.owner,
         "account_type": acc.account_type,
-        "balance":      acc.balance,
+        "balance": acc.balance,
         "transactions": acc.transactions,
     }
     if isinstance(acc, CheckingAccount):
         d["overdraft_limit"] = acc.overdraft_limit
     elif isinstance(acc, SavingsAccount):
-        d["monthly_withdrawal_limit"]  = acc.monthly_withdrawal_limit
-        d["withdrawals_this_month"]    = acc._withdrawals_this_month
+        d["monthly_withdrawal_limit"] = acc.monthly_withdrawal_limit
+        d["withdrawals_this_month"] = acc._withdrawals_this_month
     return d
 
 

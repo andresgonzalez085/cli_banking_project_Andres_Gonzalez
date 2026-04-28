@@ -12,8 +12,7 @@ from modules.accounts import CheckingAccount, SavingsAccount
 from modules.utils import clear_screen, format_currency, generate_id, validate_amount
 
 # Session-level account registry: account_id -> Account instance.
-# Populated on login, cleared on logout.
-# Sprint 4 (file_io.py) will absorb the persistence helpers below.
+# Populated via file_io.load_accounts() on login, cleared on logout.
 _accounts = {}
 
 
@@ -22,7 +21,14 @@ _accounts = {}
 # ---------------------------------------------------------------------------
 
 def _make_banner():
-    """Build the welcome banner with perfect box alignment."""
+    """Build the AG Bank welcome banner with perfect box alignment.
+
+    Constructs each line programmatically using str.ljust so every row is
+    exactly W characters wide, avoiding alignment drift from manual spacing.
+
+    Returns:
+        str: Multi-line banner string ready to print.
+    """
     W = 54
     border = '+' + '=' * W + '+'
     blank  = '|' + ' ' * W + '|'
@@ -64,11 +70,13 @@ _BANNER = _make_banner()
 # ---------------------------------------------------------------------------
 
 def _show_banner():
+    """Clear the terminal and print the pre-built AG Bank banner."""
     clear_screen()
     print(_BANNER)
 
 
 def _show_main_menu():
+    """Print the pre-authentication main menu options."""
     print("  +-----------------------------------+")
     print("  |          MAIN  MENU               |")
     print("  +-----------------------------------+")
@@ -79,6 +87,11 @@ def _show_main_menu():
 
 
 def _show_banking_menu(user):
+    """Print the top-level banking menu for an authenticated user.
+
+    Args:
+        user (User): The currently logged-in user.
+    """
     print(f"\n  Logged in as: {user.username}  (ID: {user.user_id})")
     print("  +-----------------------------------+")
     print("  |         BANKING  MENU             |")
@@ -92,6 +105,11 @@ def _show_banking_menu(user):
 
 
 def _show_transactions_menu(user):
+    """Print the Transactions submenu for an authenticated user.
+
+    Args:
+        user (User): The currently logged-in user.
+    """
     print(f"\n  Logged in as: {user.username}")
     print("  +-----------------------------------+")
     print("  |      TRANSACTIONS  MENU           |")
@@ -105,6 +123,11 @@ def _show_transactions_menu(user):
 
 
 def _show_accounts_menu(user):
+    """Print the Manage Accounts submenu for an authenticated user.
+
+    Args:
+        user (User): The currently logged-in user.
+    """
     print(f"\n  Logged in as: {user.username}")
     print("  +-----------------------------------+")
     print("  |       MANAGE  ACCOUNTS            |")
@@ -118,6 +141,11 @@ def _show_accounts_menu(user):
 
 
 def _show_search_sort_menu(user):
+    """Print the Search & Sort submenu for an authenticated user.
+
+    Args:
+        user (User): The currently logged-in user.
+    """
     print(f"\n  Logged in as: {user.username}")
     print("  +-----------------------------------+")
     print("  |     SEARCH & SORT  MENU           |")
@@ -133,6 +161,11 @@ def _show_search_sort_menu(user):
 
 
 def _show_reports_menu(user):
+    """Print the Reports submenu for an authenticated user.
+
+    Args:
+        user (User): The currently logged-in user.
+    """
     print(f"\n  Logged in as: {user.username}")
     print("  +-----------------------------------+")
     print("  |         REPORTS  MENU             |")
@@ -146,17 +179,25 @@ def _show_reports_menu(user):
 
 
 # ---------------------------------------------------------------------------
-# Account persistence helpers — delegate to file_io (Sprint 4)
+# Account persistence helpers
 # ---------------------------------------------------------------------------
 
 def _load_user_accounts(username):
-    """Populate _accounts with every account owned by username."""
+    """Populate the session _accounts registry from accounts.json.
+
+    Args:
+        username (str): Owner whose accounts should be loaded.
+    """
     global _accounts
     _accounts = file_io.load_accounts(username)
 
 
 def _save_user_accounts(username):
-    """Write _accounts back to accounts.json via file_io."""
+    """Persist the session _accounts registry to accounts.json.
+
+    Args:
+        username (str): Owner whose accounts are being saved.
+    """
     file_io.save_accounts(username, _accounts)
 
 

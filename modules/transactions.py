@@ -52,7 +52,7 @@ def _print_receipt(txn_type, account, amount, note=""):
         note (str): Optional extra line (e.g. interest rate info).
     """
     txn = account.transactions[-1]
-    W   = 35
+    W = 35
     sep = "  +" + "-" * W + "+"
 
     def dline(label, value):
@@ -85,7 +85,7 @@ def _print_transfer_receipt(from_acc, to_acc, amount):
         amount (float): Transfer amount.
     """
     txn = from_acc.transactions[-1]
-    W   = 35
+    W = 35
     sep = "  +" + "-" * W + "+"
 
     def dline(label, value):
@@ -203,7 +203,7 @@ def transfer(from_acc, to_acc, amount):
     to_acc.transactions[-1]["type"] = "TRANSFER"
 
     from_txn = from_acc.transactions[-1]
-    to_txn   = to_acc.transactions[-1]
+    to_txn = to_acc.transactions[-1]
 
     write_audit(
         from_acc.owner, "TRANSFER",
@@ -268,8 +268,8 @@ def apply_account_interest(account, rate, periods):
     if rate <= 0:
         raise ValueError("Interest rate must be a positive decimal (e.g. 0.05).")
 
-    old_balance    = account.balance
-    new_balance    = apply_interest(old_balance, rate, periods)
+    old_balance = account.balance
+    new_balance = apply_interest(old_balance, rate, periods)
     interest_earned = new_balance - old_balance
 
     if interest_earned <= 0:

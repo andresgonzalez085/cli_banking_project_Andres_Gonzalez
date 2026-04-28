@@ -18,10 +18,19 @@ _COLS = [
 
 
 def _sep():
+    """Return the horizontal separator line for the transaction table."""
     return '  +' + '+'.join('-' * (w + 2) for _, _, w in _COLS) + '+'
 
 
 def _row(values):
+    """Return a single data or header row for the transaction table.
+
+    Args:
+        values (list): Cell values in column order; converted to str if needed.
+
+    Returns:
+        str: Formatted table row string ready to print.
+    """
     cells = [f" {str(v):<{w}} " for v, (_, _, w) in zip(values, _COLS)]
     return '  |' + '|'.join(cells) + '|'
 
