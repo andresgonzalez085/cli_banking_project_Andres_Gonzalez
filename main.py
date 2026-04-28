@@ -5,6 +5,8 @@ Run with: python main.py
 
 import modules.auth as auth
 import modules.file_io as file_io
+import modules.reports as rpt
+import modules.search_sort as ss
 import modules.transactions as txn
 from modules.accounts import CheckingAccount, SavingsAccount
 from modules.utils import clear_screen, format_currency, generate_id, validate_amount
@@ -111,6 +113,34 @@ def _show_accounts_menu(user):
     print("  |  2. Create Savings Account        |")
     print("  |  3. View All Accounts             |")
     print("  |  4. Delete Account                |")
+    print("  |  5. Back to Banking Menu          |")
+    print("  +-----------------------------------+")
+
+
+def _show_search_sort_menu(user):
+    print(f"\n  Logged in as: {user.username}")
+    print("  +-----------------------------------+")
+    print("  |     SEARCH & SORT  MENU           |")
+    print("  +-----------------------------------+")
+    print("  |  1. Linear Search (ID or type)    |")
+    print("  |  2. Binary Search (by amount)     |")
+    print("  |  3. Sort by Date  (oldest first)  |")
+    print("  |  4. Sort by Date  (newest first)  |")
+    print("  |  5. Sort by Amount (lowest first) |")
+    print("  |  6. Sort by Amount (highest first)|")
+    print("  |  7. Back to Banking Menu          |")
+    print("  +-----------------------------------+")
+
+
+def _show_reports_menu(user):
+    print(f"\n  Logged in as: {user.username}")
+    print("  +-----------------------------------+")
+    print("  |         REPORTS  MENU             |")
+    print("  +-----------------------------------+")
+    print("  |  1. Balance Chart (PNG)           |")
+    print("  |  2. Export History (CSV)          |")
+    print("  |  3. Transaction Summary (stats)   |")
+    print("  |  4. Account Statement (terminal)  |")
     print("  |  5. Back to Banking Menu          |")
     print("  +-----------------------------------+")
 
@@ -454,16 +484,130 @@ def _handle_transactions(user):
             input("  Press Enter to continue...")
 
 
-def _handle_search_sort():
-    """Sprint 5: search and sort transaction history."""
-    print("\n  [Search & Sort — available in Sprint 5]")
-    input("  Press Enter to continue...")
+# ---------------------------------------------------------------------------
+# Search & Sort submenu loop
+# ---------------------------------------------------------------------------
+
+def _handle_search_sort(user):
+    """Open the Search & Sort submenu for the logged-in user."""
+    while True:
+        _show_banner()
+        _show_search_sort_menu(user)
+        choice = input("\n  Select an option (1-7): ").strip()
+
+        if choice == '7':
+            break
+
+        if choice not in ('1', '2', '3', '4', '5', '6'):
+            print("  Invalid option. Please enter 1 through 7.")
+            input("  Press Enter to continue...")
+            continue
+
+        user_accs = [a for a in _accounts.values() if a.owner == user.username]
+        account = _select_account(user_accs, "Select account number")
+        if account is None:
+            continue
+
+        txns = account.transactions
+        if not txns:
+            print("  This account has no transaction history.")
+            input("  Press Enter to continue...")
+            continue
+
+        if choice == '1':
+            query = input("  Search query (Txn ID or type keyword): ").strip()
+            if not query:
+                print("  Query cannot be empty.")
+                input("  Press Enter to continue...")
+                continue
+            results = ss.linear_search(txns, query)
+            print(f"\n  Linear Search results for '{query}':")
+            ss.print_results(results)
+            input("  Press Enter to continue...")
+
+        elif choice == '2':
+            raw = input("  Amount to search for: $").strip()
+            try:
+                amount = float(raw)
+            except ValueError:
+                print("  Invalid amount.")
+                input("  Press Enter to continue...")
+                continue
+            sorted_txns = ss.sorted_by_amount(txns)
+            results = ss.binary_search(sorted_txns, amount)
+            print(f"\n  Binary Search results for ${amount:.2f}:")
+            ss.print_results(results)
+            input("  Press Enter to continue...")
+
+        elif choice == '3':
+            results = ss.bubble_sort(txns, reverse=False)
+            print("\n  Sorted by Date (oldest first):")
+            ss.print_results(results)
+            input("  Press Enter to continue...")
+
+        elif choice == '4':
+            results = ss.bubble_sort(txns, reverse=True)
+            print("\n  Sorted by Date (newest first):")
+            ss.print_results(results)
+            input("  Press Enter to continue...")
+
+        elif choice == '5':
+            results = ss.sorted_by_amount(txns, reverse=False)
+            print("\n  Sorted by Amount (lowest first):")
+            ss.print_results(results)
+            input("  Press Enter to continue...")
+
+        elif choice == '6':
+            results = ss.sorted_by_amount(txns, reverse=True)
+            print("\n  Sorted by Amount (highest first):")
+            ss.print_results(results)
+            input("  Press Enter to continue...")
 
 
-def _handle_reports():
-    """Sprint 5: balance chart and CSV export."""
-    print("\n  [Reports & Visualization — available in Sprint 5]")
-    input("  Press Enter to continue...")
+# ---------------------------------------------------------------------------
+# Reports submenu loop
+# ---------------------------------------------------------------------------
+
+def _handle_reports(user):
+    """Open the Reports submenu for the logged-in user."""
+    while True:
+        _show_banner()
+        _show_reports_menu(user)
+        choice = input("\n  Select an option (1-5): ").strip()
+
+        if choice == '5':
+            break
+
+        if choice not in ('1', '2', '3', '4'):
+            print("  Invalid option. Please enter 1 through 5.")
+            input("  Press Enter to continue...")
+            continue
+
+        user_accs = [a for a in _accounts.values() if a.owner == user.username]
+        account = _select_account(user_accs, "Select account number")
+        if account is None:
+            continue
+
+        if choice == '1':
+            print("\n  Generating balance chart...")
+            path = rpt.generate_balance_chart(account)
+            if path:
+                print(f"\n  Chart saved to:\n  {path}")
+            input("\n  Press Enter to continue...")
+
+        elif choice == '2':
+            path = rpt.export_transactions_csv(account)
+            if path:
+                print(f"\n  CSV saved to:\n  {path}")
+            input("\n  Press Enter to continue...")
+
+        elif choice == '3':
+            rpt.generate_summary(account)
+            input("  Press Enter to continue...")
+
+        elif choice == '4':
+            rpt.print_account_statement(account)
+            input("\n  Press Enter to continue...")
 
 
 # ---------------------------------------------------------------------------
@@ -507,9 +651,9 @@ def _banking_menu_loop(user):
         elif choice == '2':
             _handle_transactions(user)
         elif choice == '3':
-            _handle_search_sort()
+            _handle_search_sort(user)
         elif choice == '4':
-            _handle_reports()
+            _handle_reports(user)
         elif choice == '5':
             _save_user_accounts(user.username)
             _accounts.clear()
